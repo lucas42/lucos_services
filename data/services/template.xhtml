@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>LucOS Services - $name$</title>
+		<meta http-equiv="refresh" content="30" />
+		<meta name="viewport" content="initial-scale=1.0" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="format-detection" content="telephone=no" />
+		<script type='text/javascript' src='http://l42.eu/script'></script>
+		<link rel='stylesheet' href="/style.css" />
+	</head>
+<body>
+	<a href="/services/" class='nav'>&lt;- All Services</a>
+	<table class="stats">
+	<tr><td>Port: </td><td>$port$</td></tr>
+	<tr><td>Path: </td><td>$path$</td></tr>
+	<tr><td>Status: </td><td class="$running$">$running$</td></tr>
+	</table>
+	$commandlist$
+	<h2 class='outputtitle'>StdOut:</h2>
+	<div class="output">$stdOut$</div>
+	<h2 class='outputtitle'>StdErr:</h2>
+	<div class="output">$stdErr$</div>
+</body>
+
+</html>
