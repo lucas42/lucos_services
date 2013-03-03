@@ -20,8 +20,6 @@ public class Service implements Runnable {
 	private Process currentProcess;
 	private Thread currentThread;
 	private static Collection<Service> services = new LinkedList<Service>();
-	private static Map<String, Integer> hostmap =  new HashMap<String, Integer>();
-	private static Map<Pattern, Integer> regexhostmap =  new HashMap<Pattern, Integer>();
 	private static Map<Integer, Service> portmap =  new HashMap<Integer, Service>();
 	private Map<String, Command> commands = new HashMap<String, Command>();
 	public Service(int port, String path, String command, String name) {
@@ -167,13 +165,6 @@ public class Service implements Runnable {
 		}
 		
 	}
-	public void registerHost(String host) {
-		hostmap.put(host, port);
-	}
-	public void registerHost(String host, Pattern pattern) {
-		hostmap.put(host, port);
-		regexhostmap.put(pattern, port);
-	}
 	public int getPort() {
 		return port;
 	}
@@ -290,26 +281,6 @@ public class Service implements Runnable {
 		
 		
 		return data.entrySet().iterator();
-	}
-	public static int getPort(String host) {
-		
-		// First check for a simple string match
-		Integer port = hostmap.get(host);
-		if (port != null) return port;
-		
-		// If not, check for regex matches
-		Matcher matcher;
-		for (Map.Entry<Pattern, Integer> entry : regexhostmap.entrySet()){
-			matcher = entry.getKey().matcher(host);
-			if (matcher.find()) return entry.getValue();
-		}
-		
-		// As a last resort, just go for the default port
-		try{
-			return Integer.parseInt(Manager.getSetting("default_port", "8080"));
-		} catch (NumberFormatException e) {
-			return 8080;
-		}
 	}
 	public static Service getByPort(int port) {
 		return portmap.get(port);
