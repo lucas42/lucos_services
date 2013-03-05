@@ -3,25 +3,15 @@ import java.net.* ;
 import java.util.*;
 public final class Manager {
 	private static Properties settings = new Properties();
-	private static int port;
 	private static Service services;
-	private static Service auth;
 	public static void main(String argv[]) throws Exception {
 		settings.load(Manager.class.getClassLoader().getResourceAsStream("config.properties"));
 		
 		
-		
-		// Set the port number.
-		try{
-			port = Integer.parseInt(getSetting("port", "8080"));
-		} catch (NumberFormatException e) {
-			port = 8080;
-		}
-		
 		setupServices();
 		
 		// Establish the listen socket.
-		ServerSocket serverSocket = new ServerSocket(port);
+		ServerSocket serverSocket = new ServerSocket(services.getPort());
     
 		// Process HTTP service requests in an infinite loop.
 		while (true) {
@@ -45,25 +35,36 @@ public final class Manager {
 	public static String getSetting(String key, String defaultValue) {
 		return settings.getProperty(key, defaultValue);
 	}
-	public static int getPort() {
-		return port;
-	}
 	public static void log(String line) {
-		System.out.println(line);
-		services.log(line);
+		if (services != null) services.log(line);
 	}
 	public static void logErr(String line) {
-		System.err.println(line);
-		services.logErr(line);
+		if (services != null) services.logErr(line);
 	}
 	public static void logErr(Exception e) {
-		System.err.println(e);
-		e.printStackTrace(System.err);
-		services.logErr(e);
+		if (services != null) services.logErr(e);
 	}
 
 	public static boolean authRunning() {
+		Service auth = Service.getAuth();
+		if (auth == null) return false;
 		return auth.isRunning();
+	}
+	public static String authDomain() {
+		Service auth = Service.getAuth();
+		if (auth == null) throw new RuntimeException("Can't get auth domain as auth service isn't running");
+		return "auth.l42.eu";
+		//return "localhost:" +  auth.getPort();
+	}
+	public static String readFile(FileInputStream fis) throws IOException {
+		
+		int bytes = 0;
+		StringBuffer contentBuffer = new StringBuffer("");
+		while((bytes = fis.read()) != -1)
+		    contentBuffer.append((char)bytes);
+		fis.close();
+
+		return contentBuffer.toString();
 	}
 	
 	/**
@@ -72,9 +73,11 @@ public final class Manager {
 	public static void setupServices() {
 		
 		// Make sure this service is created first, for logging purposes
-		services = new Service (getPort(), "services", "nice -n 18 java -cp .:../lib/java/* Manager", "Services");
-		services.addCommand("build", "./build.sh", "Rebuild");
-		Service mediamanager = new Service(8001, "media/manager", "java -cp .:../../lib/java/* Manager", "Media Manager");
+		/*services = new Service (getPort(), "services", "nice -n 18 java -cp .:../lib/java/* Manager", "Services");
+		services.addCommand("build", "./build.sh", "Rebuild");*/
+		services = Service.loadServicesService();
+		Service.loadServiceList();
+		/*Service mediamanager = new Service(8001, "media/manager", "java -cp .:../../lib/java/* Manager", "Media Manager");
 		mediamanager.addCommand("build", "./build.sh", "Rebuild");
 		Service mediaselector = new Service(8002, "media/selector", "./playlist.pl", "Media Selector");
 		mediaselector.addCommand("weighting", "../weighting/weighting_cron", "Recalculate Weightings");
@@ -89,6 +92,6 @@ public final class Manager {
 		Service googlecontactssync = new Service(8011, "contacts/googlesync", "./server.rb", "Google Contacts sync");
 		Service dnsupdater = new Service(8012, "dns", "./server.pl", "DNS Updater");
 		Service progs = new Service(8013, "progs", "./server.py", "Progs v4");
-		Service speak = new Service(8014, "speak", "node server.js", "Speak");
+		Service speak = new Service(8014, "speak", "node server.js", "Speak");*/
 	}
 }

@@ -4,60 +4,133 @@ class Command implements Runnable {
 	protected Service service;
 	private String cmd;
 	protected String name;
+	public boolean run = false;  // Whether the command should be running
+	private boolean running = false; // Whether the command is running
+	private Process currentProcess;
 	public Command(Service service, String cmd, String name) {
 		this.service = service;
 		this.cmd = cmd;
 		this.name = name;
 	}
 	public void run() {
+		
+		// Don't let each command run more than once concurrently
+		if (running) return;
+		if (!run) return;
+		
+		
 		try {
 			final Process process = Runtime.getRuntime().exec(cmd, null, service.getWorkingDir());
-			
+			running = true;
+			currentProcess = process;
 			
 			final BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
 			final BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-			
-			new Thread(new Runnable() {  
-				public void run() {
-					try {
-						String s = null;
-						while ((s = stdInput.readLine()) != null) {
-							service.log(s);
+			try {
+				
+				
+				// Destroy the command's process on shutdown
+				Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+					public void run() {
+						service.log("Stopping command "+name);
+						process.destroy();
+						try {
+							stdInput.close();
+						} catch (IOException e) {
+							Manager.logErr("Failed to close stdInput for "+name);
+							Manager.logErr(e);
 						}
-					} catch (IOException e) {
-						service.logErr("Can't read from "+name+", IOException.");
-						service.logErr(e);
-					}
-				}
-			}).start();
-			
-			new Thread(new Runnable() {  
-				public void run() {
-					try {
-						String s = null;
-						while ((s = stdError.readLine()) != null) {
-							service.logErr(s);
+						try {
+							stdError.close();
+						} catch (IOException e) {
+							Manager.logErr("Failed to close stdError for "+name);
+							Manager.logErr(e);
 						}
-					} catch (IOException e) {
-						service.logErr("Can't read err from "+name+", IOException.");
-						service.logErr(e);
+						
+						
+						running = false;
 					}
-				}
-			}).start();
+				}));
+				
+				new Thread(new Runnable() {
+					public void run() {
+						try {
+							String s = null;
+							while ((s = stdInput.readLine()) != null) {
+								service.log(s);
+							}
+						} catch (IOException e) {
+							service.logErr("Can't read from "+name+", IOException.");
+							service.logErr(e);
+						}
+					}
+				}).start();
+				
+				new Thread(new Runnable() {  
+					public void run() {
+						try {
+							String s = null;
+							while ((s = stdError.readLine()) != null) {
+								service.logErr(s);
+							}
+						} catch (IOException e) {
+							service.logErr("Can't read err from "+name+", IOException.");
+							service.logErr(e);
+						}
+					}
+				}).start();
+				
+				
+				process.waitFor();
+				service.log("Command "+name+" completed");
+			} catch (IllegalStateException e) {
+				
+				// This occurs when the JVM is shutting down, in which case don't bother trying to do anything afterwards
+				return;
+			} catch (InterruptedException e) {
+				service.logErr("Command "+name+" interrupted");
+				service.logErr(e);
+			}
+			running = false;
 			
-			
-			process.waitFor();
-			service.log("Command "+name+" completed");
-		} catch (InterruptedException e) {
-			service.logErr("Command "+name+" interrupted");
-			service.logErr(e);
+			// Tidy up the old process and any pipes left open before doing anything else
+			process.destroy();
+			try {
+				stdInput.close();
+			} catch (IOException e) {
+				Manager.logErr("Failed to close stdInput for "+name);
+				Manager.logErr(e);
+			}
+			try {
+				stdError.close();
+			} catch (IOException e) {
+				Manager.logErr("Failed to close stdError for "+name);
+				Manager.logErr(e);
+			}
 		} catch (IOException e) {
-			service.logErr("Command "+name+" died of IOException");
-			service.logErr(e);
+			Manager.logErr("Process "+name+" didn't load due to IOException");
+			Manager.logErr(e);
 		}
 	}
 	public String getName() {
 		return name;
+	}
+	public boolean isRunning() {
+		return running;
+	}
+	
+	/**
+	 * Updates the command and name.  Restarts if the command has changed
+	 *
+	 * @return void
+	 */
+	public void update(String cmd, String name) {
+		boolean needsRestart = !cmd.equals(this.cmd);
+		this.cmd = cmd;
+		this.name = name;
+		if (needsRestart) {
+			service.logErr("Restart not yet implemented");
+		}
 	}
 }
 
@@ -97,3 +170,24 @@ class ClearLogCommand extends Command {
 		service.clearLog();
 	}
 }
+
+class ReloadConfigCommand extends Command {
+	public ReloadConfigCommand(Service service) {
+		super(service, null, "Reload Config");
+	}
+	public void run() {
+		service.updateFromConfig();
+		service.log("Updated Service from Config");
+	}
+}
+
+class ReloadServiceListCommand extends Command {
+	public ReloadServiceListCommand(Service service) {
+		super(service, null, "Reload Service List");
+	}
+	public void run() {
+		Service.loadServiceList();
+		service.log("Loaded Service List");
+	}
+}
+

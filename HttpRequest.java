@@ -122,13 +122,10 @@ final class HttpRequest implements Runnable {
                 if (pathParts.length > 2 && pathParts[1].equals("services")) {
                     String id = pathParts[2];
                     if (id.length() > 0) {
-                        try {
-                            service = Service.getByPort(Integer.parseInt(id));
-                            if (service != null) {
-                                fileName = "./data/services/template.xhtml";
-                            }
-                        } catch (NumberFormatException e) {
-                        }
+						service = Service.getById(id);
+						if (service != null) {
+							fileName = "./data/services/template.xhtml";
+						}
                     }
                 }
                 if (fileName.charAt(fileName.length()-1) == '/') fileName += "index";
@@ -136,13 +133,13 @@ final class HttpRequest implements Runnable {
                 String token = get.get("token");
                 if (token == null) token = cookies.get("token");
                 
-                // An agentid of null means the user hasn't authenticated - an agentid of zero indicates a problem retrieved the agentid from the authentication service
+                // An agentid of null means the user hasn't authenticated - an agentid of zero indicates a problem retrieving the agentid from the authentication service
                 Integer agentid = null;
                 if (token != null) {
                     agentid = agents.get(token);
-                    if (agentid == null) {
+                    if (agentid == null && Manager.authRunning()) {
                         try{
-                            URL dataurl = new URL("http://auth.l42.eu/data?token="+URLEncoder.encode(token, "utf8"));
+                            URL dataurl = new URL("http://"+Manager.authDomain()+"/data?token="+URLEncoder.encode(token, "utf8"));
                             Gson gson = new Gson();
                             BufferedReader datain = new BufferedReader(new InputStreamReader(dataurl.openStream()));
                             String data = "";
@@ -166,7 +163,7 @@ final class HttpRequest implements Runnable {
                 if (service != null && !isAuthorised(agentid, method, "http://"+host+path)) {
                     // Don't allow anything to happen without authorisation (the isAuthorised function should have sorted out the appropriate headers)
                 } else if (service != null && pathParts.length > 3  && method.equalsIgnoreCase("POST") && service.execCommand(pathParts[3]))  {
-                    redirect("/services/"+service.getPort());
+                    redirect("/services/"+service.getId());
                 } else if (path.equals("/") || path.equals("/services")) {
                     redirect("/services/");
                 } else {
@@ -298,20 +295,21 @@ final class HttpRequest implements Runnable {
         sendHeaders(302, "Redirect", headers);
     }
     private void html(FileInputStream fis, Iterator dataIter) throws IOException {
-        int bytes = 0;
-        StringBuffer contentBuffer = new StringBuffer("");
-        while((bytes = fis.read()) != -1)
-            contentBuffer.append((char)bytes);
-        fis.close();
+        String content = Manager.readFile(fis);
 
-        String content = contentBuffer.toString();
-        
         while (dataIter.hasNext()) {
             Map.Entry keyval = (Map.Entry)dataIter.next();
             String key = "$"+keyval.getKey()+"$";
             String val = (String)keyval.getValue();
+			if (val == null) {
+				val = "";
+				Manager.logErr("Null value found for key '"+key+"' in html()");
+			}
             if (key.endsWith("_html$")) key = key.replace("_html", "");
             else val = val.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+			
+			// Replace any dollars in the values in case they get mixed up with placeholders
+			val = val.replace("$", "&#36;");
             content = content.replace(key, val);
         }
     
@@ -325,7 +323,7 @@ final class HttpRequest implements Runnable {
             
         // If the auth service is running then make sure the user has authenticated
         if (Manager.authRunning() && agentid == null) {
-            redirect("http://auth.l42.eu/authenticate?redirect_uri="+URLEncoder.encode(uri, "utf8"));
+            redirect("http://"+Manager.authDomain()+"/authenticate?redirect_uri="+URLEncoder.encode(uri, "utf8"));
             return false;
         }
         

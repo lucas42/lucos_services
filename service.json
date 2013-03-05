@@ -1,0 +1,7 @@
+{
+	"name": "Services",
+	"port": 8000,
+	"commands": {
+		"Rebuild": "./build.sh"
+	}
+}
