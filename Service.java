@@ -282,17 +282,17 @@ public class Service {
 		stdOut.clear();
 	}
 	public boolean execCommand(String key) {
+		return execCommand(key, false);
+	}
+	public boolean execCommand(String key, boolean keepRunning) {
 		Command command = commands.get(key);
 		if (command == null) return false;
-		command.run = true;
-		Thread thread = new Thread(command);
-		thread.start();
+		command.exec(keepRunning);
 		return true;
 	}
 	public void stopCommand(String key) {
 		Command command = commands.get(key);
 		if (command == null) return;
-		command.run = false;
 		command.kill();
 	}
 	public boolean isRunning() {
