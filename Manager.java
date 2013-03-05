@@ -53,8 +53,9 @@ public final class Manager {
 	public static String authDomain() {
 		Service auth = Service.getAuth();
 		if (auth == null) throw new RuntimeException("Can't get auth domain as auth service isn't running");
+		
+		// TODO: base this on the specific auth service being run, rather than always using the live one
 		return "auth.l42.eu";
-		//return "localhost:" +  auth.getPort();
 	}
 	public static String readFile(FileInputStream fis) throws IOException {
 		
@@ -72,26 +73,8 @@ public final class Manager {
 	 */
 	public static void setupServices() {
 		
-		// Make sure this service is created first, for logging purposes
-		/*services = new Service (getPort(), "services", "nice -n 18 java -cp .:../lib/java/* Manager", "Services");
-		services.addCommand("build", "./build.sh", "Rebuild");*/
+		// Make sure the services service is created first, for logging purposes
 		services = Service.loadServicesService();
 		Service.loadServiceList();
-		/*Service mediamanager = new Service(8001, "media/manager", "java -cp .:../../lib/java/* Manager", "Media Manager");
-		mediamanager.addCommand("build", "./build.sh", "Rebuild");
-		Service mediaselector = new Service(8002, "media/selector", "./playlist.pl", "Media Selector");
-		mediaselector.addCommand("weighting", "../weighting/weighting_cron", "Recalculate Weightings");
-		Service root = new Service(8003, "root", "java -cp .:../lib/java/* Server", "Root");
-		root.addCommand("build", "./build.sh", "Rebuild");
-		Service notes = new Service(8004, "notes", "node server.js", "Notes");		
-		Service contacts = new Service(8005, "contacts/contacts", "python manage.py runserver 0.0.0.0:8005 --noreload", "Contacts");
-		auth = new Service(8006, "auth", "node server.js", "Authentication");
-		Service status = new Service(8007, "status", "node server.js", "Status");
-		Service time = new Service(8008, "time", "node server.js", "Am");
-		Service travel = new Service(8009, "travel", "./server.rb", "Travel");
-		Service googlecontactssync = new Service(8011, "contacts/googlesync", "./server.rb", "Google Contacts sync");
-		Service dnsupdater = new Service(8012, "dns", "./server.pl", "DNS Updater");
-		Service progs = new Service(8013, "progs", "./server.py", "Progs v4");
-		Service speak = new Service(8014, "speak", "node server.js", "Speak");*/
 	}
 }

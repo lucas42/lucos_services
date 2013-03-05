@@ -44,7 +44,7 @@ final class HttpRequest implements Runnable {
                 while ((headerLine = br.readLine()) != null) {
                     if (headerLine.length() < 1) break;
                      
-			request.add(headerLine);
+					request.add(headerLine);
                     int jj = headerLine.indexOf(':');
                     if (jj == -1) continue;
                     String field = headerLine.substring(0, jj).trim();

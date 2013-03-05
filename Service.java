@@ -15,12 +15,8 @@ public class Service {
 	private String name;
 	private String id;
 	
-	//private boolean run = false;  // Whether the service should be running
-	//private boolean running = false; // Whether the service is running
 	private Queue<String> stdOut = new LinkedList<String>();
 	private Queue<String> stdErr = new LinkedList<String>();
-	//private Process currentProcess;
-	//private Thread currentThread;
 	
 	// Whether the service refers to this program
 	private final boolean isMaster;
@@ -42,10 +38,7 @@ public class Service {
 		
 		// The "services" service (ie this program) is already running
 		if (isMaster) {
-			commands.put("reloadservicelist", new ReloadServiceListCommand(this));
-			//run = true;
-			//running = true;
-			
+			commands.put("reloadservicelist", new ReloadServiceListCommand(this));			
 		// For other services, start the start command
 		} else {
 			commands.put("start", new StartCommand(this));
@@ -94,130 +87,11 @@ public class Service {
 			}
 		}
 		
+		// TODO: remove any commands which have been removed from JSON
+		
 		if (name == null) logErr("Missing name in settings file: ".concat(settingsFile.getAbsolutePath()));
 		
 	}
-	/*public void run() {
-		
-		// Don't let each service run more than once concurrently
-		if (running) return;
-		if (!run) return;
-		
-		
-		try {
-			final Process process = Runtime.getRuntime().exec(command, null, workingdir);
-			currentProcess = process;
-			running = true;
-			
-			final BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			final BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-			try {
-				
-				
-				// Destroy the service's process on shutdown
-				Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-					public void run() {
-						Manager.log("Shutting down service "+name);
-						process.destroy();
-						try {
-							stdInput.close();
-						} catch (IOException e) {
-							Manager.logErr("Failed to close stdInput for "+name);
-							Manager.logErr(e);
-						}
-						try {
-							stdError.close();
-						} catch (IOException e) {
-							Manager.logErr("Failed to close stdError for "+name);
-							Manager.logErr(e);
-						}
-						
-						
-						running = false;
-					}
-				}));
-				
-				new Thread(new Runnable() {
-					public void run() {
-						try {
-							String s = null;
-							while ((s = stdInput.readLine()) != null) {
-								log(s);
-							}
-						} catch (IOException e) {
-							Manager.logErr("Can't read from "+name+", IOException.");
-							Manager.logErr(e);
-						}
-					}
-				}).start();
-				
-				new Thread(new Runnable() {
-					public void run() {
-						try {
-							String s = null;
-							while ((s = stdError.readLine()) != null) {
-								
-								// HACK: Old version of django doesn't give much control on logging and spews stuff out to stderr.  Send everything to stdout
-								if (name.equals("Contacts")) {
-									log(s);
-									continue;
-								}
-								logErr(s);
-							}
-						} catch (IOException e) {
-							Manager.logErr("Can't read err from "+name+", IOException.");
-							Manager.logErr(e);
-						}
-					}
-				}).start();
-				
-				
-				process.waitFor();
-			} catch (IllegalStateException e) {
-				
-				// This occurs when the JVM is shutting down, in which case don't bother trying to restart anything
-				return;
-			} catch (InterruptedException e) {
-				Manager.logErr("Service "+name+" interrupted");
-				Manager.logErr(e);
-			}
-			running = false;
-			if (run) {
-				Manager.log("Service "+name+" stopped, restarting in 30 seconds...");
-				try {
-					Thread.sleep(30*1000);
-				} catch (InterruptedException e) {
-					Manager.logErr("Sleep interrupted, going straight to restart...");
-					Manager.logErr(e);
-				}
-			}
-			// Tidy up the old process and any pipes left open before restarting the process
-			process.destroy();
-			try {
-				stdInput.close();
-			} catch (IOException e) {
-				Manager.logErr("Failed to close stdInput for "+name);
-				Manager.logErr(e);
-			}
-			try {
-				stdError.close();
-			} catch (IOException e) {
-				Manager.logErr("Failed to close stdError for "+name);
-				Manager.logErr(e);
-			}
-			// If the service is set to run, restart the process (NB: this recursive call can cause horrible stack traces)
-			if (run) {
-				run();
-			} else {
-				Manager.log("Service "+name+" stopped.");
-			}
-			
-		} catch (IOException e) {
-			Manager.logErr("Process "+name+" didn't load due to IOException");
-			Manager.logErr(e);
-		}
-		
-	}*/
 	public int getPort() {
 		return port;
 	}
@@ -260,23 +134,6 @@ public class Service {
 		e.printStackTrace(printWriter);
 		logErr(writer.toString());
 	}
-	/*void start() {
-		if (running) return;
-		run = true;
-		currentThread = new Thread(this);
-		currentThread.start();
-		Manager.log("Starting service "+this.getName()+" ("+command+")");
-	}
-	void stop() {
-		
-		// Can't kill services module
-		if (isMaster) return;
-		if (!run) return;
-		run = false;
-		if (!running) return;
-		currentProcess.destroy();
-		Manager.log(this.getName() +" process destroyed");
-	}*/
 	void clearLog() {
 		stdErr.clear();
 		stdOut.clear();
