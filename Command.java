@@ -118,6 +118,11 @@ class Command implements Runnable {
 	public boolean isRunning() {
 		return running;
 	}
+	public void kill() {
+		if (!isRunning()) return;
+		currentProcess.destroy();
+		Manager.log("Process "+name+" killed");
+	}
 	
 	/**
 	 * Updates the command and name.  Restarts if the command has changed
@@ -139,7 +144,7 @@ class StartCommand extends Command {
 		super(service, null, "Start");
 	}
 	public void run() {
-		service.start();
+		service.execCommand("main");
 	}
 }
 
@@ -148,7 +153,7 @@ class StopCommand extends Command {
 		super(service, null, "Stop");
 	}
 	public void run() {
-		service.stop();
+		service.stopCommand("main");
 	}
 }
 
@@ -157,8 +162,8 @@ class RestartCommand extends Command {
 		super(service, null, "Restart");
 	}
 	public void run() {
-		service.stop();
-		service.start();
+		service.stopCommand("main");
+		service.execCommand("main");
 	}
 }
 

@@ -5,27 +5,33 @@ import java.util.*;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-public class Service implements Runnable {
+public class Service {
 	
-	// The tcp port send HTTP requests to for this service
+	// The tcp port HTTP requests are sent to for this service
 	private int port;
 	
-	// The command to run and the directory to run it in
-	private String command;
 	private File workingdir;
 	
-	// The name of this service (for internal use)
 	private String name;
 	private String id;
-	private boolean run = false;  // Whether the service should be running
-	private boolean running = false; // Whether the service is running
+	
+	//private boolean run = false;  // Whether the service should be running
+	//private boolean running = false; // Whether the service is running
 	private Queue<String> stdOut = new LinkedList<String>();
 	private Queue<String> stdErr = new LinkedList<String>();
-	private Process currentProcess;
-	private Thread currentThread;
-	private static Map<String, Service> serviceList =  new HashMap<String, Service>();
+	//private Process currentProcess;
+	//private Thread currentThread;
+	
+	// Whether the service refers to this program
 	private final boolean isMaster;
+	
+	// A list of the commands which can be run for this service
 	private Map<String, Command> commands = new HashMap<String, Command>();
+	
+	// A list of all the services
+	private static Map<String, Service> serviceList =  new HashMap<String, Service>();
+	
+	
 	private Service(String id, File workingdir) {
 		this.isMaster = id.equals("services");
 		this.workingdir = workingdir;
@@ -37,11 +43,14 @@ public class Service implements Runnable {
 		// The "services" service (ie this program) is already running
 		if (isMaster) {
 			commands.put("reloadservicelist", new ReloadServiceListCommand(this));
-			run = true;
-			running = true;
+			//run = true;
+			//running = true;
 			
 		// For other services, start the start command
 		} else {
+			commands.put("start", new StartCommand(this));
+			commands.put("stop", new StopCommand(this));
+			commands.put("restart", new RestartCommand(this));
 			execCommand("start");
 		}
 	}
@@ -88,7 +97,7 @@ public class Service implements Runnable {
 		if (name == null) logErr("Missing name in settings file: ".concat(settingsFile.getAbsolutePath()));
 		
 	}
-	public void run() {
+	/*public void run() {
 		
 		// Don't let each service run more than once concurrently
 		if (running) return;
@@ -208,7 +217,7 @@ public class Service implements Runnable {
 			Manager.logErr(e);
 		}
 		
-	}
+	}*/
 	public int getPort() {
 		return port;
 	}
@@ -251,7 +260,7 @@ public class Service implements Runnable {
 		e.printStackTrace(printWriter);
 		logErr(writer.toString());
 	}
-	void start() {
+	/*void start() {
 		if (running) return;
 		run = true;
 		currentThread = new Thread(this);
@@ -267,7 +276,7 @@ public class Service implements Runnable {
 		if (!running) return;
 		currentProcess.destroy();
 		Manager.log(this.getName() +" process destroyed");
-	}
+	}*/
 	void clearLog() {
 		stdErr.clear();
 		stdOut.clear();
@@ -280,10 +289,16 @@ public class Service implements Runnable {
 		thread.start();
 		return true;
 	}
+	public void stopCommand(String key) {
+		Command command = commands.get(key);
+		if (command == null) return;
+		command.run = false;
+		command.kill();
+	}
 	public boolean isRunning() {
 		if (isMaster) return true;
-		if (!commands.containsKey("start")) return false;
-		return commands.get("start").isRunning();
+		if (!commands.containsKey("main")) return false;
+		return commands.get("main").isRunning();
 	}
 	public boolean hasError() {
 		return (stdErr.size() > 0);
@@ -295,7 +310,6 @@ public class Service implements Runnable {
 		Map<String, String> data =  new HashMap<String, String>();
 		data.put("port", ""+port);
 		data.put("path", workingdir.getAbsolutePath());
-		if (command != null) data.put("command", command);
 		data.put("name", this.getName());
 		data.put("running", (this.isRunning())?"running":"stopped");
 		Iterator iter;
@@ -323,6 +337,9 @@ public class Service implements Runnable {
 		while (iter.hasNext()) {
 			Map.Entry header = (Map.Entry)iter.next();
 			Command command = (Command)header.getValue();
+			
+			// Ignore the main command, as it's wrapped by Start/Stop/Restart
+			if (header.getKey().equals("main")) continue;
 			String action = "/services/"+id+"/"+header.getKey();
 			commandlist += "\t<li><form method='post' action=\""+action+"\">"
 			+ "<input type='submit' value=\""
@@ -363,9 +380,7 @@ public class Service implements Runnable {
 	 * @returns Service
 	 */
 	public static Service loadServicesService() {
-		//Service services = new Service (Manager.getPort(), "services", "nice -n 18 java -cp .:../lib/java/* Manager", "Services");
 		Service services = new Service("services", new File("."));
-		//services.addCommand("build", "./build.sh", "Rebuild");
 		serviceList.put("services", services);
 		return services;
 	}
