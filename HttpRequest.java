@@ -231,7 +231,9 @@ final class HttpRequest implements Runnable {
                 br.close();
                 socket.close();
             
-            
+				
+			} catch (SocketException e) {
+				// Don't do anything if there's a socketexception - it's probably just the client disconnecting before it's received the full request
             } catch (Exception e) {
                 Manager.logErr("Server Error (HttpRequest):");
                 Manager.logErr(e);
@@ -312,8 +314,7 @@ final class HttpRequest implements Runnable {
 			val = val.replace("$", "&#36;");
             content = content.replace(key, val);
         }
-    
-        os.writeBytes(content);
+		os.writeBytes(content);
         
     }
     private boolean isAuthorised(Integer agentid, String method, String uri) throws Exception {
