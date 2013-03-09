@@ -168,7 +168,7 @@ public class Service {
 	public String getDomain() {
 		return domain;
 	}
-	public Iterator getDataIterator() {
+	public Map<String, String> getData() {
 		Map<String, String> data =  new HashMap<String, String>();
 		data.put("port", ""+port);
 		data.put("path", workingdir.getAbsolutePath());
@@ -213,12 +213,15 @@ public class Service {
 		data.put("commandlist_html", commandlist);
 		
 		
-		return data.entrySet().iterator();
+		return data;
+	}
+	public Iterator getDataIterator() {
+			return getData().entrySet().iterator();
 	}
 	public static Service getById(String id) {
 		return serviceList.get(id);
 	}
-	public static Iterator getAllDataIterator() {
+	public static Map<String, String> getAllData() {
 		Map<String, String> data =  new HashMap<String, String>();
 		String servicelist = "<ul id='servicelist'>\n";
 		Iterator iter = serviceList.entrySet().iterator();
@@ -234,7 +237,10 @@ public class Service {
 		}
 		servicelist += "</ul>";
 		data.put("servicelist_html", servicelist);
-		return data.entrySet().iterator();
+		return data;
+	}
+	public static Iterator getAllDataIterator() {
+		return getAllData().entrySet().iterator();
 	}
 
 	/**

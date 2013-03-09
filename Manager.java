@@ -55,6 +55,10 @@ public final class Manager {
 		if (auth == null) throw new RuntimeException("Can't get auth domain as auth service isn't running");
 		return auth.getDomain();
 	}
+	public static String servicesDomain() {
+		return "192.168.33.10:8000";
+		//return services.getDomain();
+	}
 	public static String readFile(FileInputStream fis) throws IOException {
 		
 		int bytes = 0;
