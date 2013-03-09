@@ -3,5 +3,6 @@
 	"port": 8000,
 	"commands": {
 		"Rebuild": "./build.sh"
-	}
+	},
+	"subdomain": "services"
 }

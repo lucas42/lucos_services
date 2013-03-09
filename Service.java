@@ -14,6 +14,7 @@ public class Service {
 	
 	private String name;
 	private String id;
+	private String domain;
 	
 	private Queue<String> stdOut = new LinkedList<String>();
 	private Queue<String> stdErr = new LinkedList<String>();
@@ -71,6 +72,7 @@ public class Service {
 		}
 		port = settings.getPort();
 		name = settings.getName();
+		domain = settings.getDomain();
 		
 		Iterator iter = settings.getCommands().entrySet().iterator();
 		while (iter.hasNext()) {
@@ -163,12 +165,16 @@ public class Service {
 	public String getId() {
 		return id;
 	}
+	public String getDomain() {
+		return domain;
+	}
 	public Iterator getDataIterator() {
 		Map<String, String> data =  new HashMap<String, String>();
 		data.put("port", ""+port);
 		data.put("path", workingdir.getAbsolutePath());
 		data.put("name", this.getName());
 		data.put("running", (this.isRunning())?"running":"stopped");
+		data.put("domain", domain);
 		Iterator iter;
 		
 		iter = stdOut.iterator();
@@ -290,6 +296,7 @@ public class Service {
 		private int port;
 		private Map<String, String> commands;
 		private String name;
+		private String subdomain;
 		public int getPort() {
 			return port;
 		}
@@ -299,6 +306,11 @@ public class Service {
 		}
 		public String getName() {
 			return name;
+		}
+		public String getDomain() {
+			String rootdomain = Manager.getSetting("root_domain", "example.com");
+			if (subdomain != null) return subdomain + "." +rootdomain;
+			return rootdomain;
 		}
 	}
 	

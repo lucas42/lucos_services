@@ -53,9 +53,7 @@ public final class Manager {
 	public static String authDomain() {
 		Service auth = Service.getAuth();
 		if (auth == null) throw new RuntimeException("Can't get auth domain as auth service isn't running");
-		
-		// TODO: base this on the specific auth service being run, rather than always using the live one
-		return "auth.l42.eu";
+		return auth.getDomain();
 	}
 	public static String readFile(FileInputStream fis) throws IOException {
 		
