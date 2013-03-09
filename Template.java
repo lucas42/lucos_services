@@ -20,17 +20,12 @@ public class Template {
 		
         while (iter.hasNext()) {
 			Map.Entry<String, String> keyval = iter.next();
-			String key = keyval.getKey();
-            String val = keyval.getValue();
-			if (val == null) {
-				Manager.logErr("Null value found for key '"+key+"' in template.setData()");
-				continue;
-			}
-			setData(key, val);
+			setData(keyval.getKey(), keyval.getValue());
         }
 		
 	}
 	public void setData(String key, String val) {
+		if (key == null || val == null) return;
 		key = "$"+key+"$";
 		
 		// When the template type is html, default to html encoding values unless they end in '_html'
@@ -51,7 +46,7 @@ public class Template {
 		String output = new String(content);
 		
 		// Replace any placeholders which haven't got data with empty strings
-		output  = output.replaceAll("/$.+?$/", "");
+		output  = output.replaceAll("\\$.+?\\$", "");
 		
 		// Unescape remaining dollar signs
 		output = output.replace("\\$", "$");
