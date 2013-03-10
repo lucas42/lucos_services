@@ -140,9 +140,7 @@ final class HttpRequest implements Runnable {
 				} else if (pathParts[1].equals("services")) {
 					if (isAuthorised(agentid, method, "http://"+Manager.servicesDomain()+path)) {
 						if (pathParts.length == 2) {
-							Template template = new Template("index", "html");
-							template.setData(Service.getAllData());
-							response.setBody(template);
+							response.setBody(Service.getIndexTemplate());
 						} else {
 							Service service = null;
 							String id = pathParts[2];
@@ -150,9 +148,7 @@ final class HttpRequest implements Runnable {
 								service = Service.getById(id);
 								if (service != null) {
 									if (pathParts.length == 3) {
-										Template template = new Template("service", "html");
-										template.setData(service.getData());
-										response.setBody(template);
+										response.setBody(service.getFullTemplate());
 									} else {
 										if (method.equalsIgnoreCase("POST")) {
 											service.execCommand(pathParts[3]);

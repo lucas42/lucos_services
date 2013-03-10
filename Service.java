@@ -168,79 +168,86 @@ public class Service {
 	public String getDomain() {
 		return domain;
 	}
-	public Map<String, String> getData() {
-		Map<String, String> data =  new HashMap<String, String>();
-		data.put("port", ""+port);
-		data.put("path", workingdir.getAbsolutePath());
-		data.put("name", this.getName());
-		data.put("running", (this.isRunning())?"running":"stopped");
-		data.put("domain", domain);
-		Iterator iter;
-		
-		iter = stdOut.iterator();
-		String stdOutContent = "";
-		while (iter.hasNext()) {
-			stdOutContent += (String)iter.next();
-			stdOutContent += "\n";
-		}
-		data.put("stdOut", stdOutContent);
-		
-		iter = stdErr.iterator();
-		String stdErrContent = "";
-		while (iter.hasNext()) {
-			stdErrContent += (String)iter.next();
-			stdErrContent += "\n";
-		}
-		data.put("stdErr", stdErrContent);
-		
-		
-		
-		String commandlist = "<ul id='commandlist'>\n";
-		iter = commands.entrySet().iterator();
-		while (iter.hasNext()) {
-			Map.Entry header = (Map.Entry)iter.next();
-			Command command = (Command)header.getValue();
-			
-			// Ignore the main command, as it's wrapped by Start/Stop/Restart
-			if (header.getKey().equals("main")) continue;
-			String action = "/services/"+id+"/"+header.getKey();
-			commandlist += "\t<li><form method='post' action=\""+action+"\">"
-			+ "<input type='submit' value=\""
-			+ command.getName().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
-			+ "\" /></form></li>\n";
-		}
-		commandlist += "</ul>";
-		data.put("commandlist_html", commandlist);
-		
-		
-		return data;
+	public Template getFullTemplate() {
+		return getTemplate(true);
 	}
-	public Iterator getDataIterator() {
-			return getData().entrySet().iterator();
+	public Template getItemTemplate() {
+		return getTemplate(false);
+	}
+	private Template getTemplate(boolean full) {
+		try {
+			Template serviceTemplate = new Template(full?"service":"serviceitem");
+			Map<String, String> data =  new HashMap<String, String>();
+			serviceTemplate.setData("port", port+"");
+			serviceTemplate.setData("path", workingdir.getAbsolutePath());
+			serviceTemplate.setData("name", this.getName());
+			serviceTemplate.setData("running", (this.isRunning())?"running":"stopped");
+			serviceTemplate.setData("domain", domain);
+			serviceTemplate.setData("error", this.hasError()?"error":"");
+			serviceTemplate.setData("url", "/services/"+this.getId());
+			
+			if (full) {
+				Iterator<String> outIter = stdOut.iterator();
+				String stdOutContent = "";
+				while (outIter.hasNext()) {
+					stdOutContent += outIter.next();
+					stdOutContent += "\n";
+				}
+				serviceTemplate.setData("stdOut", stdOutContent);
+				
+				Iterator<String> errIter = stdErr.iterator();
+				String stdErrContent = "";
+				while (errIter.hasNext()) {
+					stdErrContent += errIter.next();
+					stdErrContent += "\n";
+				}
+				serviceTemplate.setData("stdErr", stdErrContent);
+				
+				
+				Iterator<Map.Entry<String, Command>> commandIter = commands.entrySet().iterator();
+				TemplateGroup commandTemplates = new TemplateGroup("html");
+				while (commandIter.hasNext()) {
+					Map.Entry<String, Command> header = commandIter.next();
+					String key = header.getKey();
+					Command command = header.getValue();
+					Template commandTemplate = new Template("commanditem");
+					
+					// Ignore the main command, as it's wrapped by Start/Stop/Restart
+					if (key.equals("main")) continue;
+					commandTemplate.setData("action", "/services/"+this.getId()+"/"+key);
+					commandTemplate.setData("name", command.getName());
+					commandTemplates.add(commandTemplate);
+				}
+				serviceTemplate.setData("commandlist", commandTemplates);
+			}
+			
+			
+			return serviceTemplate;
+		} catch (IOException e) {
+			Manager.logErr("Problem with service templates");
+			Manager.logErr(e);
+			return null;
+		}
 	}
 	public static Service getById(String id) {
 		return serviceList.get(id);
 	}
-	public static Map<String, String> getAllData() {
-		Map<String, String> data =  new HashMap<String, String>();
-		String servicelist = "<ul id='servicelist'>\n";
-		Iterator iter = serviceList.entrySet().iterator();
-		while (iter.hasNext()) {
-			Map.Entry header = (Map.Entry)iter.next();
-			Service service = (Service)header.getValue();
-			servicelist += "\t<li class=\""
-			+((service.isRunning())?"running":"stopped")
-			+((service.hasError())?" error":"")
-			+"\"><a href=\"/services/"+service.getId()+"\">"
-			+ service.getName().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
-			+ "</a></li>\n";
+	public static Template getIndexTemplate() {
+		try {
+			Template indexTemplate = new Template("index");
+			TemplateGroup serviceTemplates = new TemplateGroup("html");
+			Iterator<Service> iter = serviceList.values().iterator();
+			while (iter.hasNext()) {
+				Service service = iter.next();
+				serviceTemplates.add(service.getItemTemplate());
+			}
+			indexTemplate.setData("servicelist", serviceTemplates);
+			return indexTemplate;
+		} catch (IOException e) {
+			Manager.logErr("Problem with index template");
+			Manager.logErr(e);
+			return null;
 		}
-		servicelist += "</ul>";
-		data.put("servicelist_html", servicelist);
-		return data;
-	}
-	public static Iterator getAllDataIterator() {
-		return getAllData().entrySet().iterator();
 	}
 
 	/**
