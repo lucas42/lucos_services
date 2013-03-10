@@ -51,13 +51,13 @@ public final class Manager {
 		return auth.isRunning();
 	}
 	public static String authDomain() {
+		if (true) return "auth.l42.eu";
 		Service auth = Service.getAuth();
 		if (auth == null) throw new RuntimeException("Can't get auth domain as auth service isn't running");
 		return auth.getDomain();
 	}
 	public static String servicesDomain() {
-		return "192.168.33.10:8000";
-		//return services.getDomain();
+		return services.getDomain();
 	}
 	public static String readFile(FileInputStream fis) throws IOException {
 		
@@ -68,6 +68,9 @@ public final class Manager {
 		fis.close();
 
 		return contentBuffer.toString();
+	}
+	public static void updateVarnish() {
+		services.execCommand("updatevarnish");
 	}
 	
 	/**

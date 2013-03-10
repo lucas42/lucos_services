@@ -213,6 +213,7 @@ class ReloadConfigCommand extends Command {
 	public void run() {
 		service.updateFromConfig();
 		service.log("Updated Service from Config");
+		Manager.updateVarnish();
 	}
 }
 
@@ -226,3 +227,19 @@ class ReloadServiceListCommand extends Command {
 	}
 }
 
+class UpdateVarnishCommand extends Command {
+	public UpdateVarnishCommand(Service service) {
+		super(service, "sudo /usr/sbin/service varnish reload", "Update Varnish");
+	}
+	public void run() {
+		try {
+			Template vcl = Service.getVCL();
+			PrintWriter output = new PrintWriter(Manager.getSetting("vcl_path", "services.vcl"));
+			output.println(vcl.toString());
+			output.close();
+		} catch (FileNotFoundException e) {
+			Manager.logErr(e);
+		}
+		super.run();
+	}
+}

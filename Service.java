@@ -7,14 +7,9 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 public class Service {
 	
-	// The tcp port HTTP requests are sent to for this service
-	private int port;
-	
 	private File workingdir;
 	
-	private String name;
 	private String id;
-	private String domain;
 	
 	private Queue<String> stdOut = new LinkedList<String>();
 	private Queue<String> stdErr = new LinkedList<String>();
@@ -24,6 +19,7 @@ public class Service {
 	
 	// A list of the commands which can be run for this service
 	private Map<String, Command> commands = new HashMap<String, Command>();
+	private ServiceSettings settings = new ServiceSettings();
 	
 	// A list of all the services
 	private static Map<String, Service> serviceList =  new HashMap<String, Service>();
@@ -39,8 +35,10 @@ public class Service {
 		
 		// The "services" service (ie this program) is already running
 		if (isMaster) {
-			commands.put("reloadservicelist", new ReloadServiceListCommand(this));			
-		// For other services, start the start command
+			commands.put("reloadservicelist", new ReloadServiceListCommand(this));
+			commands.put("updatevarnish", new UpdateVarnishCommand(this));
+
+			// For other services, start the start command
 		} else {
 			commands.put("start", new StartCommand(this));
 			commands.put("stop", new StopCommand(this));
@@ -50,7 +48,6 @@ public class Service {
 	}
 	public void updateFromConfig() {
 		File settingsFile = new File(this.workingdir, Manager.getSetting("service_json", "service.json"));
-		ServiceSettings settings;
 		Map<String,String> serviceDirList;
 		try {
 			String json = Manager.readFile(new FileInputStream(settingsFile));
@@ -70,9 +67,6 @@ public class Service {
 			logErr("Invalid format in service settings file: ".concat(settingsFile.getAbsolutePath()));
 			return;
 		}
-		port = settings.getPort();
-		name = settings.getName();
-		domain = settings.getDomain();
 		
 		Iterator iter = settings.getCommands().entrySet().iterator();
 		while (iter.hasNext()) {
@@ -91,15 +85,15 @@ public class Service {
 		
 		// TODO: remove any commands which have been removed from JSON
 		
-		if (name == null) logErr("Missing name in settings file: ".concat(settingsFile.getAbsolutePath()));
+		if (settings.name == null) logErr("Missing name in settings file: ".concat(settingsFile.getAbsolutePath()));
 		
 	}
 	public int getPort() {
-		return port;
+		return settings.port;
 	}
 	public String getName() {
-		if (name == null) return id;
-		return name;
+		if (settings.name == null) return id;
+		return settings.name;
 	}
 	public File getWorkingDir() {
 		return workingdir;
@@ -166,68 +160,78 @@ public class Service {
 		return id;
 	}
 	public String getDomain() {
-		return domain;
+		return settings.getDomain();
 	}
-	public Template getFullTemplate() {
-		return getTemplate(true);
+	public Template getFullTemplate() throws IOException {
+		Template serviceTemplate = new Template("service");
+		setBasicData(serviceTemplate);
+		setExtendedData(serviceTemplate);
+		return serviceTemplate;
 	}
-	public Template getItemTemplate() {
-		return getTemplate(false);
+	public Template getItemTemplate() throws IOException {
+		Template serviceTemplate = new Template("serviceitem");
+		setBasicData(serviceTemplate);
+		return serviceTemplate;
 	}
-	private Template getTemplate(boolean full) {
-		try {
-			Template serviceTemplate = new Template(full?"service":"serviceitem");
-			Map<String, String> data =  new HashMap<String, String>();
-			serviceTemplate.setData("port", port+"");
-			serviceTemplate.setData("path", workingdir.getAbsolutePath());
-			serviceTemplate.setData("name", this.getName());
-			serviceTemplate.setData("running", (this.isRunning())?"running":"stopped");
-			serviceTemplate.setData("domain", domain);
-			serviceTemplate.setData("error", this.hasError()?"error":"");
-			serviceTemplate.setData("url", "/services/"+this.getId());
-			
-			if (full) {
-				Iterator<String> outIter = stdOut.iterator();
-				String stdOutContent = "";
-				while (outIter.hasNext()) {
-					stdOutContent += outIter.next();
-					stdOutContent += "\n";
-				}
-				serviceTemplate.setData("stdOut", stdOutContent);
-				
-				Iterator<String> errIter = stdErr.iterator();
-				String stdErrContent = "";
-				while (errIter.hasNext()) {
-					stdErrContent += errIter.next();
-					stdErrContent += "\n";
-				}
-				serviceTemplate.setData("stdErr", stdErrContent);
-				
-				
-				Iterator<Map.Entry<String, Command>> commandIter = commands.entrySet().iterator();
-				TemplateGroup commandTemplates = new TemplateGroup("html");
-				while (commandIter.hasNext()) {
-					Map.Entry<String, Command> header = commandIter.next();
-					String key = header.getKey();
-					Command command = header.getValue();
-					Template commandTemplate = new Template("commanditem");
-					
-					// Ignore the main command, as it's wrapped by Start/Stop/Restart
-					if (key.equals("main")) continue;
-					commandTemplate.setData("action", "/services/"+this.getId()+"/"+key);
-					commandTemplate.setData("name", command.getName());
-					commandTemplates.add(commandTemplate);
-				}
-				serviceTemplate.setData("commandlist", commandTemplates);
-			}
-			
-			
-			return serviceTemplate;
-		} catch (IOException e) {
-			Manager.logErr("Problem with service templates");
-			Manager.logErr(e);
-			return null;
+	public Template getVCLBackend() throws IOException {
+		Template backendTemplate = new Template("backend", "vcl");
+		setBasicData(backendTemplate);
+		return backendTemplate;
+	}
+	public Template getVCLRecvHost() throws IOException {
+		Template recvHostTemplate = new Template("recvhost", "vcl");
+		setBasicData(recvHostTemplate);
+		String customvcl = null;
+		if (settings.disablecaching) {
+				customvcl = "return (pass); #turn off caching for now";
 		}
+		recvHostTemplate.setData("custom", customvcl);
+		return recvHostTemplate;
+	}
+	private void setBasicData(Template template) {
+		template.setData("port", this.getPort()+"");
+		template.setData("path", workingdir.getAbsolutePath());
+		template.setData("name", this.getName());
+		template.setData("running", (this.isRunning())?"running":"stopped");
+		template.setData("domain", this.getDomain());
+		template.setData("error", this.hasError()?"error":"");
+		template.setData("url", "/services/"+this.getId());
+		template.setData("id", this.getId());
+	}
+	private void setExtendedData(Template template) throws IOException {
+		Iterator<String> outIter = stdOut.iterator();
+		String stdOutContent = "";
+		while (outIter.hasNext()) {
+			stdOutContent += outIter.next();
+			stdOutContent += "\n";
+		}
+		template.setData("stdOut", stdOutContent);
+		
+		Iterator<String> errIter = stdErr.iterator();
+		String stdErrContent = "";
+		while (errIter.hasNext()) {
+			stdErrContent += errIter.next();
+			stdErrContent += "\n";
+		}
+		template.setData("stdErr", stdErrContent);
+		
+		
+		Iterator<Map.Entry<String, Command>> commandIter = commands.entrySet().iterator();
+		TemplateGroup commandTemplates = new TemplateGroup("html");
+		while (commandIter.hasNext()) {
+			Map.Entry<String, Command> header = commandIter.next();
+			String key = header.getKey();
+			Command command = header.getValue();
+			Template commandTemplate = new Template("commanditem");
+			
+			// Ignore the main command, as it's wrapped by Start/Stop/Restart
+			if (key.equals("main")) continue;
+			commandTemplate.setData("action", "/services/"+this.getId()+"/"+key);
+			commandTemplate.setData("name", command.getName());
+			commandTemplates.add(commandTemplate);
+		}
+		template.setData("commandlist", commandTemplates);
+		
 	}
 	public static Service getById(String id) {
 		return serviceList.get(id);
@@ -243,6 +247,26 @@ public class Service {
 			}
 			indexTemplate.setData("servicelist", serviceTemplates);
 			return indexTemplate;
+		} catch (IOException e) {
+			Manager.logErr("Problem with index template");
+			Manager.logErr(e);
+			return null;
+		}
+	}
+	public static Template getVCL() {
+		try {
+			Template vclTemplate = new Template("services", "vcl");
+			TemplateGroup backendTemplates = new TemplateGroup("vcl");
+			TemplateGroup recvHostTemplates = new TemplateGroup("vcl");
+			Iterator<Service> iter = serviceList.values().iterator();
+			while (iter.hasNext()) {
+				Service service = iter.next();
+				backendTemplates.add(service.getVCLBackend());
+				recvHostTemplates.add(service.getVCLRecvHost());
+			}
+			vclTemplate.setData("backends", backendTemplates);
+			vclTemplate.setData("recvhosts", recvHostTemplates);
+			return vclTemplate;
 		} catch (IOException e) {
 			Manager.logErr("Problem with index template");
 			Manager.logErr(e);
@@ -299,6 +323,7 @@ public class Service {
 				serviceList.put(serviceKey, service);
 			}
 		}
+		Manager.updateVarnish();
 	}
 	
 	public static Service getAuth() {
@@ -306,19 +331,14 @@ public class Service {
 	}
 
 	static class ServiceSettings {
-		private int port;
+		public int port;
+		public String name;
+		public boolean disablecaching;
 		private Map<String, String> commands;
-		private String name;
 		private String subdomain;
-		public int getPort() {
-			return port;
-		}
 		public Map<String, String> getCommands() {
 			if (commands == null) return new HashMap<String, String>();
 			return commands;
-		}
-		public String getName() {
-			return name;
 		}
 		public String getDomain() {
 			String rootdomain = Manager.getSetting("root_domain", "example.com");
