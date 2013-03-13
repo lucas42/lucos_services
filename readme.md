@@ -25,7 +25,8 @@ These are config options used for all services being run.  Options include:
 
 ##Dependencies
 * Java
-* Varnish
+* [Google gson](https://code.google.com/p/google-gson/)
+* [Varnish](https://www.varnish-cache.org/)
 
 ##Installation
 To build the project, run *./build.sh*
