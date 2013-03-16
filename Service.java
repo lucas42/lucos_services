@@ -199,7 +199,10 @@ public class Service {
 		template.setData("id", this.getId());
 	}
 	private void setExtendedData(Template template) throws IOException {
-		Iterator<String> outIter = stdOut.iterator();
+		
+		// Create a copy of the stdOut list in an attempt to prevent Concurrency Errors (as commands may be writing to it whilst this iterates through)
+		Queue<String> stdOutCopy = new LinkedList<String>(stdOut);
+		Iterator<String> outIter = stdOutCopy.iterator();
 		String stdOutContent = "";
 		while (outIter.hasNext()) {
 			stdOutContent += outIter.next();
@@ -207,7 +210,8 @@ public class Service {
 		}
 		template.setData("stdOut", stdOutContent);
 		
-		Iterator<String> errIter = stdErr.iterator();
+		Queue<String> stdErrCopy = new LinkedList<String>(stdErr);
+		Iterator<String> errIter = stdErrCopy.iterator();
 		String stdErrContent = "";
 		while (errIter.hasNext()) {
 			stdErrContent += errIter.next();
