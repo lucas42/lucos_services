@@ -116,8 +116,8 @@ class Command implements Runnable {
 					Manager.logErr(e);
 				}
 			} catch (IOException e) {
-				Manager.logErr("Process "+name+" didn't load due to IOException");
-				Manager.logErr(e);
+				service.logErr("Process "+name+" didn't load due to IOException");
+				service.logErr(e);
 			}
 			if (run) {
 				if (isMain) Manager.log("Service "+name+" stopped, restarting in 30 seconds...");
