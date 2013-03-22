@@ -162,6 +162,14 @@ final class HttpRequest implements Runnable {
 						}
 						
 					}
+				} else if (pathParts[1].equals("api")) {
+					if (pathParts.length == 2) {
+						response.setJson("// TODO: write some API documentation");
+					} else if (pathParts[2].equals("hosts")) {
+						response.setJson(Service.getHosts());
+					} else {
+						response.notFound();
+					}
                 } else {
 					
 					if (path.equals("/icon")) path = "/icon.png";

@@ -1,6 +1,7 @@
 import java.io.* ;
 import java.net.* ;
 import java.util.* ;
+import com.google.gson.*;
 class HttpResponse {
     final static String CRLF = "\r\n";
     DataOutputStream os;
@@ -67,6 +68,12 @@ class HttpResponse {
 	}
 	public void notFound() {
 		notFound("File");
+	}
+	public void setJson(Object output) {
+		clearBody();
+		Gson gson = new Gson();
+		bodyString = gson.toJson(output);
+		setHeader("Content-type", "application/json");
 	}
 	
     private static String contentType(String fileName) {

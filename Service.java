@@ -277,6 +277,19 @@ public class Service {
 			return null;
 		}
 	}
+	
+	/**
+	 * Returns a mapping of all the services (running and not) and their domains
+	 */
+	public static Map getHosts() {
+		Map<String, String> hosts = new HashMap<String, String>();
+		Iterator<Service> iter = serviceList.values().iterator();
+		while (iter.hasNext()) {
+			Service service = iter.next();
+			hosts.put(service.getId(), service.getDomain());
+		}
+		return hosts;
+	}
 
 	/**
 	 * Loads the Service for the currently running Service (this is quite meta, but allows for easy logging etc)
