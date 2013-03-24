@@ -44,6 +44,7 @@ public class Template extends TemplateValue{
 		templateFile = new File(templateDir, name + "." + type);
 		content = Manager.readFile(new FileInputStream(templateFile));
 		data = new HashMap<String, TemplateValue>();
+		if (type.equals("html")) setData("rootdomain", Service.getById("root").getDomain());
 	}
 	public void setData(String key, String val) {
 		if (val != null) setData(key, new TemplateString(val));
