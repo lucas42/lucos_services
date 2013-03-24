@@ -27,8 +27,10 @@ class Command implements Runnable {
 		if (isRunning()) return;
 		do {
 			
+			// Pass port and domain of this service to the command if neccessary.
+			String populatedcmd = cmd.replace("%p", Integer.toString(service.getPort())).replace("%d", Manager.servicesDomain());
 			try {
-				final Process process = Runtime.getRuntime().exec(cmd, null, service.getWorkingDir());
+				final Process process = Runtime.getRuntime().exec(populatedcmd, null, service.getWorkingDir());
 				running = true;
 				currentProcess = process;
 				

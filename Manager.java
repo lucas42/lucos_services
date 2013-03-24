@@ -77,7 +77,7 @@ public final class Manager {
 	 */
 	public static void setupServices() {
 		
-		// Make sure the services service is created first, for logging purposes
+		// Make sure the services service is created first, for logging and reference purposes
 		services = Service.loadServicesService();
 		Service.loadServiceList();
 	}
