@@ -237,9 +237,6 @@ public class Service {
 		template.setData("commandlist", commandTemplates);
 		
 	}
-	public static Service getById(String id) {
-		return serviceList.get(id);
-	}
 	public static Template getIndexTemplate() {
 		try {
 			Template indexTemplate = new Template("index");
@@ -342,9 +339,10 @@ public class Service {
 		}
 		Manager.updateVarnish();
 	}
-	
-	public static Service getAuth() {
-		return serviceList.get("auth");
+	public static Service getById(String id) {
+		Service service = serviceList.get(id);
+		if (service == null) throw new RuntimeException("Can't find " + id + " service");
+		return service;
 	}
 
 	static class ServiceSettings {

@@ -46,15 +46,14 @@ public final class Manager {
 	}
 
 	public static boolean authRunning() {
-		Service auth = Service.getAuth();
-		if (auth == null) return false;
-		return auth.isRunning();
+		try {
+			return Service.getById("auth").isRunning();
+		} catch (RuntimeException e) {
+			return false;
+		}
 	}
 	public static String authDomain() {
-		if (true) return "auth.l42.eu";
-		Service auth = Service.getAuth();
-		if (auth == null) throw new RuntimeException("Can't get auth domain as auth service isn't running");
-		return auth.getDomain();
+		return Service.getById("auth").getDomain();
 	}
 	public static String servicesDomain() {
 		return services.getDomain();

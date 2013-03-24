@@ -112,8 +112,9 @@ final class HttpRequest implements Runnable {
                 if (token != null) {
                     agentid = agents.get(token);
                     if (agentid == null && Manager.authRunning()) {
+						String authurl = "http://"+Manager.authDomain()+"/data?token="+URLEncoder.encode(token, "utf8");
                         try{
-                            URL dataurl = new URL("http://"+Manager.authDomain()+"/data?token="+URLEncoder.encode(token, "utf8"));
+                            URL dataurl = new URL(authurl);
                             Gson gson = new Gson();
                             BufferedReader datain = new BufferedReader(new InputStreamReader(dataurl.openStream()));
                             String data = "";
@@ -129,7 +130,9 @@ final class HttpRequest implements Runnable {
 								response.setHeader("Set-Cookie", "token=" + URLEncoder.encode(token, "utf8"));
                             }
                         } catch (FileNotFoundException e) {
+							Manager.logErr("Auth Error: Can't connect to "+authurl);
                         } catch (IOException e) {
+							Manager.logErr("Auth Error: Problem reading from "+authurl);
                         }
                     }
                 }
@@ -145,8 +148,8 @@ final class HttpRequest implements Runnable {
 							Service service = null;
 							String id = pathParts[2];
 							if (id.length() > 0) {
-								service = Service.getById(id);
-								if (service != null) {
+								try {
+									service = Service.getById(id);
 									if (pathParts.length == 3) {
 										response.setBody(service.getFullTemplate());
 									} else {
@@ -155,7 +158,7 @@ final class HttpRequest implements Runnable {
 										}
 										response.redirect("/services/"+service.getId());
 									}
-								} else {
+								} catch (RuntimeException e) {
 									response.notFound("Service");
 								}
 							}
