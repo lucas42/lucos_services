@@ -132,7 +132,7 @@ final class HttpRequest implements Runnable {
                         } catch (FileNotFoundException e) {
 							Manager.logErr("Auth Error: Can't connect to "+authurl);
                         } catch (IOException e) {
-							Manager.logErr("Auth Error: Problem reading from "+authurl);
+							// Don't do anything here as it usually just means that the cookie is no longer valid  (the isAuthorised function will handle getting a new cookie later on)
                         }
                     }
                 }
