@@ -351,11 +351,13 @@ public class Service {
 		public boolean disablecaching;
 		private Map<String, String> commands;
 		private String subdomain;
+		private String domain;
 		public Map<String, String> getCommands() {
 			if (commands == null) return new HashMap<String, String>();
 			return commands;
 		}
 		public String getDomain() {
+			if (domain != null) return domain;
 			String rootdomain = Manager.getSetting("root_domain", "example.com");
 			if (subdomain != null) return subdomain + "." +rootdomain;
 			return rootdomain;
