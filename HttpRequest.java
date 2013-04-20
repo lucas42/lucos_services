@@ -78,6 +78,7 @@ final class HttpRequest implements Runnable {
 					}
 					path = path.substring(0, ii);
 				}
+				path = URLDecoder.decode(path, "UTF-8");
 
 				// Extract the cookies from the request
 				Map<String, String> cookies = new HashMap<String, String>();
