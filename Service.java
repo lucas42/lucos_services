@@ -99,7 +99,7 @@ public class Service {
 		return workingdir;
 	}
 	public void log(String line) {
-		if (isMaster) System.out.println(line);
+		if (isMaster || id.equals("auth")) System.out.println(line);
 		int outputLength;
 		try {
 			outputLength = Integer.parseInt(Manager.getSetting("output_length"));
@@ -110,7 +110,7 @@ public class Service {
 		while (stdOut.size() > outputLength) stdOut.remove();
 	}
 	public void logErr(String line) {
-		if (isMaster) System.err.println(line);
+		if (isMaster || id.equals("auth")) System.err.println(line);
 		int outputLength;
 		try {
 			outputLength = Integer.parseInt(Manager.getSetting("output_length"));
@@ -121,7 +121,7 @@ public class Service {
 		while (stdErr.size() > outputLength) stdErr.remove();
 	}
 	public void logErr(Exception e) {
-		if (isMaster) {
+		if (isMaster || id.equals("auth")) {
 			System.err.println(e);
 			e.printStackTrace(System.err);
 		}
