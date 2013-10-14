@@ -139,7 +139,10 @@ public class Service {
 	}
 	public boolean execCommand(String key, boolean keepRunning) {
 		Command command = commands.get(key);
-		if (command == null) return false;
+		if (command == null) {
+			logErr("Can't find command '"+key+"'");
+			return false;
+		}
 		command.exec(keepRunning);
 		return true;
 	}
@@ -359,8 +362,8 @@ public class Service {
 		public String getDomain() {
 			if (domain != null) return domain;
 			String rootdomain = Manager.getSetting("root_domain", "example.com");
-			if (subdomain != null) return subdomain + "." +rootdomain;
-			return rootdomain;
+			if (subdomain == null || subdomain.equals("")) return rootdomain;
+			return subdomain + "." +rootdomain;
 		}
 	}
 	
