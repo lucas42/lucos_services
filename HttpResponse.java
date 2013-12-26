@@ -57,10 +57,18 @@ class HttpResponse {
 			setBody(errormsg);
 		}
 	}
-	public void redirect(String url) {
+	public void redirect(String url, int statuscode) {
+		if (statuscode < 300 || statuscode >= 400) {
+			Manager.logErr("Invalid redirect status code: "+statuscode+".  Must be in the 3xx range");
+			redirect(url);
+			return;
+		}
 		clearBody();
-		setStatus(307, "Redirect");
+		setStatus(statuscode, "Redirect");
 		setHeader("Location", url);
+	}
+	public void redirect(String url) {
+		redirect(url, 302);
 	}
 	public void notFound(String type) {
 		String msg = type + " Not Found";

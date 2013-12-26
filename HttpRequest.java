@@ -222,7 +222,7 @@ final class HttpRequest implements Runnable {
             
         // If the auth service is running then make sure the user has authenticated
         if (Manager.authRunning() && agentid == null) {
-            response.redirect("http://"+Manager.authDomain()+"/authenticate?redirect_uri="+URLEncoder.encode(uri, "utf8"));
+            response.redirect("http://"+Manager.authDomain()+"/authenticate?redirect_uri="+URLEncoder.encode(uri, "utf8"), 307);
             return false;
         }
         
