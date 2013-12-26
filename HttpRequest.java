@@ -158,8 +158,11 @@ final class HttpRequest implements Runnable {
 									} else {
 										if (method.equalsIgnoreCase("POST")) {
 											service.execCommand(pathParts[3]);
+											response.redirect("/services/"+service.getId());
+										} else {
+											response.setError(405, "Not Allowed.");
+											response.setHeader("Allow", "POST");
 										}
-										response.redirect("/services/"+service.getId());
 									}
 								} catch (RuntimeException e) {
 									response.notFound("Service");
