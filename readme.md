@@ -20,7 +20,8 @@ These are config options used for all services being run.  Options include:
 * **output_length**: The number of lines of stdout and stderr to display for each service
 * **root_domain**: The domain to append to each of the services' subdomains
 * **template_dir**: The path of the templates directory (relative to the services project root)
-* **service_json**: The filename of each service's config file
+* **service_json**: The filename of each service's config file (defaults to service.json)
+* **service_list**: The filename of the list of which services to run, relative to root_path (defaults to service_list.json)
 * **vcl_path**: The path of the varnish config file which the project can update
 
 ##Dependencies
