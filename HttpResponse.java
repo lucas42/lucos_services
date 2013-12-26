@@ -104,6 +104,9 @@ class HttpResponse {
         if(fileName.endsWith("manifest")) {
             return "text/cache-manifest";
         }
+        if(fileName.endsWith("ico")) {
+            return "image/x-icon";
+        }
         return "application/octet-stream";
     }
     private void sendHeaders() throws IOException {

@@ -189,6 +189,7 @@ final class HttpRequest implements Runnable {
                     FileInputStream fis = null;
                     try {
 						response.setBody(new FileInputStream(fileName));
+						response.setFileName(fileName);
                     } catch (FileNotFoundException e) {
 						response.notFound();
                     }
