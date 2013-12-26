@@ -128,7 +128,6 @@ final class HttpRequest implements Runnable {
                             agentid = ad.getId();
                             if (agentid > 0) {
                                 agents.put(token, agentid);
-								response.setHeader("Set-Cookie", "token=" + URLEncoder.encode(token, "utf8"));
                             }
                         } catch (FileNotFoundException e) {
 							Manager.logErr("Auth Error: Can't connect to "+authurl);
@@ -138,6 +137,10 @@ final class HttpRequest implements Runnable {
                         	Manager.logErr(e);
                         }
                     }
+                }
+                if (agentid != null && agentid > 0 
+                	&& cookies.get("token") != token) {
+					response.setHeader("Set-Cookie", "token=" + URLEncoder.encode(token, "utf8"));
                 }
                 
 				String[] pathParts = path.split("\\/");
