@@ -4,5 +4,6 @@
 	"commands": {
 		"Rebuild": "./build.sh"
 	},
-	"subdomain": "services"
+	"subdomain": "services",
+	"disablecaching": true
 }
