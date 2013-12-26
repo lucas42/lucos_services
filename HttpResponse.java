@@ -59,7 +59,7 @@ class HttpResponse {
 	}
 	public void redirect(String url) {
 		clearBody();
-		setStatus(302, "Redirect");
+		setStatus(307, "Redirect");
 		setHeader("Location", url);
 	}
 	public void notFound(String type) {
