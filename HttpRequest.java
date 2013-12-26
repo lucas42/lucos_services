@@ -117,7 +117,14 @@ final class HttpRequest implements Runnable {
                         try{
                             URL dataurl = new URL(authurl);
                             Gson gson = new Gson();
-                            BufferedReader datain = new BufferedReader(new InputStreamReader(dataurl.openStream()));
+                            HttpURLConnection connection = (HttpURLConnection) dataurl.openConnection();
+                            InputStream is;
+                            if (connection.getResponseCode() == 200) {
+                            	is = connection.getInputStream();
+                            } else {
+                            	is = connection.getErrorStream();
+                            }
+                            BufferedReader datain = new BufferedReader(new InputStreamReader(is));
                             String data = "";
                             String datastr;
                             while ((datastr = datain.readLine()) != null) {
@@ -125,13 +132,22 @@ final class HttpRequest implements Runnable {
                             }
                             datain.close();
                             AuthData ad = gson.fromJson(data, AuthData.class);
-                            agentid = ad.getId();
-                            if (agentid > 0) {
-                                agents.put(token, agentid);
-                            }
+                            if (connection.getResponseCode() == 200) {
+	                            agentid = ad.getId();
+	                            if (agentid > 0) {
+	                                agents.put(token, agentid);
+	                            }
+	                        } else {
+
+	                        	// If the authentication returned an error response, then invalidate the token.
+	                        	Manager.logErr("Auth Error: "+ad.getError());
+	                        	agents.remove(token);
+	                        	agentid = null;
+	                        }
                         } catch (FileNotFoundException e) {
 							Manager.logErr("Auth Error: Can't connect to "+authurl);
                         } catch (IOException e) {
+                        	Manager.logErr(e.getMessage());
 
                         	// Sometimes these errors can get the user stuck in an endless loop, so output them.
                         	Manager.logErr(e);
@@ -246,10 +262,14 @@ final class HttpRequest implements Runnable {
 
     static class AuthData {
         private int id;
+        private String error;
         public AuthData() {
         }
         public int getId() {
              return id;
+        }
+        public String getError() {
+        	return error;
         }
     }
 	
