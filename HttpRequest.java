@@ -140,7 +140,7 @@ final class HttpRequest implements Runnable {
 	                        } else {
 
 	                        	// If the authentication returned an error response, then invalidate the token.
-	                        	Manager.logErr("Auth Error: "+ad.getError());
+	                        	Manager.log("Auth Error: "+ad.getError());
 	                        	agents.remove(token);
 	                        	agentid = null;
 	                        }
