@@ -121,10 +121,6 @@ public class Service {
 		while (stdErr.size() > outputLength) stdErr.remove();
 	}
 	public void logErr(Exception e) {
-		if (isMaster || id.equals("auth")) {
-			System.err.println(e);
-			e.printStackTrace(System.err);
-		}
 		Writer writer = new StringWriter();
 		PrintWriter printWriter = new PrintWriter(writer);
 		e.printStackTrace(printWriter);
