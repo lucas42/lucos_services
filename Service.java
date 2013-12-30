@@ -110,6 +110,10 @@ public class Service {
 		while (stdOut.size() > outputLength) stdOut.remove();
 	}
 	public void logErr(String line) {
+		if (settings.combinestdouterr) {
+			log(line);
+			return;
+		}
 		if (isMaster || id.equals("auth")) System.err.println(line);
 		int outputLength;
 		try {
@@ -234,6 +238,7 @@ public class Service {
 			commandTemplates.add(commandTemplate);
 		}
 		template.setData("commandlist", commandTemplates);
+		if (settings.combinestdouterr) template.setData("outputclass", "combinestdouterr");
 		
 	}
 	public static Template getIndexTemplate() {
@@ -348,6 +353,7 @@ public class Service {
 		public int port;
 		public String name;
 		public boolean disablecaching;
+		public boolean combinestdouterr;
 		private Map<String, String> commands;
 		private String subdomain;
 		private String domain;

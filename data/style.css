@@ -17,3 +17,4 @@ a:hover { text-decoration: underline; }
 .section h3 { margin-bottom: 0; }
 
 .errormsg { margin: 2em 1em; font-weight: bold; }
+#output.combinestdouterr .stderr { display:none; }

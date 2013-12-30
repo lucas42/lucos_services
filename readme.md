@@ -26,6 +26,7 @@ Each lucos service should have a config file in the root of its project.  This c
 * **port**: ( *int* ) The port the service runs on
 * **sudomain**: ( *String* ) The subdomain to run the service on
 * **disablecaching**: ( *boolean* ) Whether to disable all caching of this service in Varnish
+* **combinestdouterr**: ( *boolean* ) Whether to treat output from stderr as if it were from stdout
 * **commands**: ( *object* ) A list of key/value pairs where the key is a human-readable label for the command and the value is the command itself.  The service's primary command (which will be automatically restarted if it fails), should have a key of *main*.
 
 
