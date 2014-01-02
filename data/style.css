@@ -2,8 +2,8 @@ body { background: #C8FFC8; font-family: Arial, Helvetica, sans-serif }
 .stats td:first-child { font-weight: bold; margin: 0 1em;}
 .stats .running { background: #009900; color: white; text-align: center; }
 .stats .stopped { background: red; color: white; text-align: center; }
-#servicelist .stopped { text-decoration: line-through; }
-#servicelist .error a { background: #900; color: #ccc;  padding: 0 5px;}
+#servicelist .stopped, #devicelist .stopped { text-decoration: line-through; }
+#servicelist .error a, #devicelist .error a { background: #900; color: #ccc;  padding: 0 5px;}
 .output { border: inset #333; background: #333; color: #FFC; white-space: pre-wrap; padding: 0.5em; max-height: 500px; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; font-family: terminal, monospace; margin: 1em 0; }
 .nav { display: block; }
 
