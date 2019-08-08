@@ -1,10 +1,13 @@
-#lucos Services
+# lucos Services
 _A java program which will run other lucos services_
 
-##Configuration
+# Deprecation
+This application was used to run services in version 2 of [lucos](https://github.com/lucas42/lucos).  It has since been supersceded by other approaches.
+
+## Configuration
 
 
-###config.properties
+### config.properties
 _This should be placed in the root directory of this project (i.e. the same level as README.md)_
 
 These are config options used for all services being run.  Options include:
@@ -17,10 +20,10 @@ These are config options used for all services being run.  Options include:
 * **vcl_path**: The path of the varnish config file which the project can update
 
 
-###service_list.json
+### service_list.json
 There should be a single list of which services to run stored in **root_path**.  This should contain a json object where the keys are identifiers of each service and the value is the path of the project, relative to **root_path**
 
-###service.json
+### service.json
 Each lucos service should have a config file in the root of its project.  This config file is json encoded and can include the following options:
 * **name**: ( *String* ) The name of the service
 * **port**: ( *int* ) The port the service runs on
@@ -30,12 +33,12 @@ Each lucos service should have a config file in the root of its project.  This c
 * **commands**: ( *object* ) A list of key/value pairs where the key is a human-readable label for the command and the value is the command itself.  The service's primary command (which will be automatically restarted if it fails), should have a key of *main*.
 
 
-##Dependencies
+## Dependencies
 * Java
 * [Google gson](https://code.google.com/p/google-gson/)
 * [Varnish](https://www.varnish-cache.org/)
 
-##Installation
+## Installation
 To build the project, run *./build.sh*
 To run the project, run *./run*
 The user which runs the project should have the following permissions:
